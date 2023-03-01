@@ -1,0 +1,131 @@
+<div class="container" id="reqii">
+  <div class="row d-flex align-items-center">
+    <div class="col">
+      <div class="text-start"><h1>시수술 수정</h1></div>
+    </div>
+    <div class="col text-end">
+      <div class="btn-group mx-auto" role="group">
+        <button type="button" class="btn btn-danger surmodiinput d-none">전송</button>
+        <button type="button" class="btn btn-outline-success modiinput-cancle" data-button-State='삭제'>전송</button>
+      </div>
+      <button type="button" class="btn btn-outline-secondary surmodicancel">초기화</button>
+    </div>
+  </div>
+  <div class="row" id="modirequ">
+    <div class="col">
+      <div class="text-center p-2 mb-1 bg-secondary bg-opacity-25 rounded-pill">원장명</div>
+      <div class="input-group">
+        <select class="form-select" id="surmodidocname">
+          <option value="" selected>신규추가 또는 수정 할 원장님을 선택해주세요.</option>
+        </select>
+        <input type="text" class="form-control" id="surmodi-newdoc" placeholder="신규 원장님 이름을 기재해주세요." required pattern="^[가-힣A-z]+$">
+        <div class="text-end invalid-feedback">
+          한글로만 기재하세요.
+        </div>
+      </div>
+    </div>
+    <div class="col" id="searchnn">
+      <div class="text-center p-2 mb-1 bg-secondary bg-opacity-25 rounded-pill">시수술명</div>
+      <div class="input-group">
+        <select class="form-select" id="surmodisurname" disabled>
+          <option value="" selected>신규추가 또는 수정 할 시수술명을 선택해주세요.</option>
+        </select>
+        <input type="text" class="form-control" id="surmodi-newsur" placeholder="신규 시수술 이름을 기재해주세요.">
+        <button type="button" class="btn btn-danger modinewsur">신규추가</button>
+      </div>
+    </div>
+  </div>
+  <hr>
+  <div class="row mb-3">
+    <div class="col text-end">
+      <select class="form-select mb-3" id="copy-doctor" disabled>
+        <option selected>복사할 원장님을 선택하세요.</option>
+      </select>
+      <button type="button" class="btn btn-outline-primary all-copy">전체복사</button>
+    </div>
+    <div class="col">
+      <select class="form-select" id="copy-sur" disabled multiple>
+        <option selected>복사할 시수술을 선택하세요.</option>
+      </select>
+    </div>
+  </div>
+
+  <table class="table table-hover table-bordered table-sm" id="input-hide-table">
+    <thead>
+      <tr class="text-center">
+        <th scope="col">코드</th>
+        <th scope="col">수술명</th>
+        <th scope="col">규격</th>
+        <th scope="col">제품명</th>
+        <th scope="col">입력단위</th>
+        <th scope="col">사용량</th>
+        <th scope="col"></th>
+        <th scope="col"></th>
+      </tr>
+    </thead>
+    <tbody id='surmodiResults'>
+      
+    </tbody>
+  </table>
+</div>
+
+<template id="surmodirowTemplate">
+  <tr class="surmodiresult-box">
+      <td class='surmodi-code text-center' scope="row"></td>
+      <td class='surmodi-surusrname text-center'></td>
+      <td class='surmodi-standard text-center'></td>
+      <td class='surmodi-product-name text-center'></td>
+      <td class='surmodi-use-stan text-center'></td>
+      <td><input type="text" class="surmodi-product-use form-control" id="product-use" value="0" style="text-align:right" required pattern="^[\d]+\.?\d{0,5}$">
+      <div class="invalid-feedback">
+        숫자 또는 소수점 5자리까지 가능합니다. ex) 2, 2.12
+      </div></td>
+      <td class="text-center">
+        <div class="btn-group" role="group">
+          <button type="button" class="btn btn-danger surmodi-delete-button d-none btn-sm">삭제</button>
+          <button type="button" class="btn btn-outline-dark surmodi-before-delete-button btn-sm" data-button-State='삭제'>삭제</button>
+        </div>
+      </td>
+      <td class="text-center"><button type="button" class="btn btn-outline-dark surmodi-edit-button btn-sm">추가</button></td>
+    </tr>
+</template>
+
+<template id="surmodirowTemplate-add">
+  <tr class="surmodiresult-box">
+      <td class='surmodi-code text-center' scope="row"></td>
+      <td class='surmodi-surusrname text-center'></td>
+      <td class='surmodi-standard text-center'></td>
+      <td class='surmodi-product-name text-center'>
+        <div class="form-inline form-group product-name-detail" >
+          <div class="col-sm-2" style="float:left;margin-right:10px;"><input type="text" class="form-control" id="surmodi-productsearch" placeholder="제품명을 검색"></div>
+          <div class="col-sm-8 surproduct-name-select" style="float:left;">
+            <select class="form-select" id="surmodi-producnames" required>
+              <option value="">제품을 선택해주세요.</option>
+            </select>
+          </div>
+        </div>
+      </td>
+      <td class='surmodi-use-stan text-center'></td>
+      <td>
+          <input type="text" class="surmodi-product-use form-control" id="product-use" value="1" style="text-align:right" required pattern="^[\d]+\.?\d{0,5}$">
+        <div class="invalid-feedback">
+          숫자 또는 소수점 5자리까지 가능합니다. ex) 2, 2.12
+        </div>
+      </td>
+      <td class="text-center">
+        <div class="btn-group" role="group">
+          <button type="button" class="btn btn-danger surmodi-delete-button d-none btn-sm">확인</button>
+          <button type="button" class="btn btn-outline-dark surmodi-before-delete-button btn-sm" data-button-State='삭제'>삭제</button>
+        </div>
+      </td>
+      <td class="text-center"><button type="button" class="btn btn-outline-dark surmodi-edit-button btn-sm">추가</button></td>
+    </tr>
+</template>
+
+<div class="container">
+  <div class="container">
+    <div class="alert alert-success invisible mt-3" id='save-success-massage'role="alert">
+      성공적으로 전송되었습니다!
+    </div>
+  </div>
+</div>

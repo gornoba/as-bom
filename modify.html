@@ -1,0 +1,43 @@
+<div class="container">
+  <div class="input-group">
+    <input type="text" class="form-control" id="modiInput" placeholder="검색어를 입력하세요. ex) 홍길동 2022-01-17">
+  </div>
+
+  <table class="table table-hover table-bordered table-sm">
+    <thead>
+      <tr class="text-center">
+        <th scope="col">환자이름</th>
+        <th scope="col">전화번호</th>
+        <th scope="col">시수술날짜</th>
+        <th scope="col">시수술 시작시간</th>
+        <th scope="col">시수술 종료시간</th>
+        <th scope="col">의사이름</th>
+        <th scope="col">층수</th>
+        <th scope="col"></th>
+        <th scope="col"></th>
+      </tr>
+    </thead>
+    <tbody id='modiResults'>
+      
+    </tbody>
+  </table>
+</div>
+
+<template id="modiTemplate">
+  <tr class="result-box">
+      <th class='hwanname text-center' scope="row">1</th>
+      <td class='phonNumber text-center'></td>
+      <td class='surdate text-center'></td>
+      <td class='surstart-time text-center'></td>
+      <td class='surend-time text-center'></td>
+      <td class='docname text-center'></td>
+      <td class='floor text-center'></td>
+      <td class="text-center"><button type="button" class="btn btn-outline-dark modi-choose-button btn-sm">선택</button></td>
+      <td class="text-center">
+        <div class="btn-group" role="group">
+          <button type="button" class="btn btn-danger all-delete-button d-none btn-sm">확인</button>
+          <button type="button" class="btn btn-outline-dark all-before-delete-button btn-sm" data-button-State='삭제'>전체삭제</button>
+        </div>
+      </td>
+    </tr>
+</template>

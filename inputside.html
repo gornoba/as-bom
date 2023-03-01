@@ -1,0 +1,480 @@
+<script>
+  function loadChooseView(e) {
+    loadView({func:'loadChooseView', callback:loadDocSurInfo});
+  }
+
+  function loadDocSurInfo() {
+    var ptime = new Date();
+    document.getElementById("surdate").valueAsDate = ptime;
+    document.getElementById("surstarttime").value = `${ptime.getHours().toString().padStart(2, '0')}:${ptime.getMinutes().toString().padStart(2, '0')}`;
+    document.getElementById("surendtime").value = `${ptime.getHours().toString().padStart(2, '0')}:${ptime.getMinutes().toString().padStart(2, '0')}`;
+
+    loadingStart();
+    document.querySelector("#head-line").textContent = 'BOM 입력'
+    google.script.run.withSuccessHandler(function(dataReturned) {
+      docsurNamedata = dataReturned.slice();
+
+      var docname = Array.from(new Set(docsurNamedata.map(a => a[0])));
+      var chooseDocSelect = document.querySelector('#select-doc');
+      docname.forEach((a) => {
+        var option = document.createElement('option');
+        option.innerText = a;
+        chooseDocSelect.append(option)
+      })
+    }).docsurName();
+
+    google.script.run.withSuccessHandler(function(dataReturned) {
+      saveUniqueData = dataReturned.slice();
+    }).modiUniqueData();
+
+    google.script.run.withSuccessHandler(function(dataReturned) {
+      if (!productName) {
+        productName = dataReturned.slice();
+      } else if (dataReturned.length != productName.length) {
+        productName = dataReturned.slice();
+      }    
+    }).bomResearchData();
+
+    google.script.run.withSuccessHandler(function(dataReturned) {
+      if (!docsurInfodata) {
+        docsurInfodata = dataReturned.slice();
+      } else if (dataReturned.length != docsurInfodata.length) {
+        docsurInfodata = dataReturned.slice();
+      }
+      loadingEnd();
+    }).docsurinfo();
+  }
+
+  function afterDocSurInfo(e) {
+    document.querySelector('#select-doc').options[0].selected = true;
+    document.querySelector("#hwanname").value = "";
+    document.querySelector("#phon-four").value = "";
+    document.querySelector('#input-floor').options[0].selected = true;
+
+    var ptime = new Date();
+    document.getElementById("surdate").valueAsDate = ptime;
+    document.getElementById("surstarttime").value = `${ptime.getHours().toString()}:${ptime.getMinutes().toString()}`;
+    document.getElementById("surendtime").value = `${ptime.getHours().toString()}:${ptime.getMinutes().toString()}`;
+
+    document.querySelector('#addsur-input').value = "";
+    var addSurSelect = document.querySelector('#addsur-select');
+    addSurSelect.options[0].selected = true
+    addSurSelect.options.length = 1;
+
+    document.getElementById('bomResults').innerHTML = "";
+    document.querySelector("#addsur-input").setAttribute("readonly","");
+    document.querySelector("#addsur-select").setAttribute("disabled","");
+  }
+
+  function releaseOptions(e)  {
+    var docSelect = document.querySelector("#select-doc");
+    if(docSelect.selectedIndex > 0) {
+      document.querySelector("#addsur-input").removeAttribute("readonly","");
+      document.querySelector("#addsur-select").removeAttribute("disabled","");
+
+      var docSelectValue = docSelect.options[docSelect.selectedIndex].value.toString();
+      var docSurNameValue = docsurNamedata.filter(a => a[0] === docSelectValue).map((b) => b[1]);
+
+      var addSurSelect = document.querySelector('#addsur-select');
+      addSurSelect.options[0].selected = true
+      addSurSelect.options.length = 1;
+
+      docSurNameValue.forEach((a) => {
+        var option = document.createElement('option');
+        option.innerText = a;
+        addSurSelect.append(option)
+      })
+
+      document.getElementById('bomResults').innerHTML = "";
+    } else {
+      var addSurSelect = document.querySelector('#addsur-select');
+      addSurSelect.options[0].selected = true
+      addSurSelect.options.length = 1;
+
+      document.querySelector("#addsur-input").setAttribute("readonly","");
+      document.querySelector("#addsur-select").setAttribute("disabled","");
+
+      document.getElementById('bomResults').innerHTML = "";
+    }
+    document.querySelector("#addsur-input").value = "";
+  }
+
+  function afterDelete(e) {
+    var buttonis = e.target.closest('.bomresult-box');
+    var modiButton = e.target.getAttribute('class').split(/\s/);
+    if (modiButton.includes('modi')) {
+      var deleteRegiNum = buttonis.querySelector('.bom-number').textContent;
+      if (deleteRegiNum > 1000) {
+        loadingStart();
+        google.script.run.withSuccessHandler(function() {
+          buttonis.remove();
+          var ids = saveData.map(a => a[0]);
+          var index = ids.indexOf(deleteRegiNum);
+          saveData.splice(index,1)
+          loadingEnd();
+        }).modiDelete(deleteRegiNum);
+      } else {
+        buttonis.remove();
+      }
+    } else {
+      buttonis.remove();
+    }    
+  }
+
+  function addProduct(e) {
+    var productAddResultBox = document.getElementById('bomResults');
+    var productAddTemplatBox = document.getElementById('bomrowTemplate-add');
+    var productAddTemplat = productAddTemplatBox.content;
+    var productAddtr = productAddTemplat.cloneNode(true);
+    var productAddselect = productAddtr.querySelector('#producnames');
+
+    var closePorduct = e.target.closest(".bomresult-box");
+    var cloaseSurname = closePorduct.querySelector('.bom-surname').textContent;
+    productAddtr.querySelector('.bom-surname').textContent = cloaseSurname;
+
+    var productAddBomNumquery = document.querySelectorAll('.bom-number');
+    var productAddBomNum = [...productAddBomNumquery].map((a) => Number(a.textContent))
+    var productAddBomNumFilter = productAddBomNum.filter(a => a<=1000)
+    
+    productAddtr.querySelector(".bom-number").textContent = productAddBomNumFilter.length > 0 ? Math.max(...productAddBomNumFilter)+1 : 1;
+
+    productName.filter((a) => a[0] != '').forEach((e,i) => {
+      var option = document.createElement('option');
+      option.innerText = e[1];
+      productAddselect.append(option)          
+    })
+
+    productAddResultBox.append(productAddtr)
+  }
+
+  function searchProduct(e) {
+    var sendBomQuery = document.querySelectorAll('.bomresult-box');
+    var sendArray = [];
+
+    sendBomQuery.forEach((a) => {
+      var trSelect = a.querySelector('#producnames');
+      var trPro = trSelect ? trSelect.options[trSelect.selectedIndex].value.toString() : a.querySelector(".product-name").textContent;
+      sendArray.push(trPro)
+    })
+
+    var closePorduct = e.target.closest(".bomresult-box");
+    var selectStandard = closePorduct.querySelector('.standard');
+    var selectProductShort = closePorduct.querySelector('.use-standard');
+    var searchInput = closePorduct.querySelector('#productsearch').value
+    var searchInputWord = searchInput.split(/\s+/);
+    var productNameMapping = productName.map((e) => [e[1]]);
+    var productResultArray = searchInput ? productNameMapping.filter(r => searchInputWord.every(word => r.some(col => col.toString().toLowerCase().includes(word.toString().toLowerCase())))) : []; 
+
+    var closePorductSelect = closePorduct.querySelector("#producnames");
+    closePorductSelect.options.length = 1;
+    closePorductSelect.options[0].selected = true;
+    
+    selectStandard.textContent = '';
+    selectProductShort.textContent = '';
+
+    if (searchInput) {
+      productResultArray.forEach((e) => {
+        if (!sendArray.includes(e[0])) {
+          var option = document.createElement('option');
+          option.innerText = e[0];
+          closePorductSelect.append(option)
+        }
+      })
+    } else {
+      productName.filter((a) => a[0] != '').forEach((e,i) => {
+        // if (!sendArray.includes(e[1])) {
+          var option = document.createElement('option');
+          option.innerText = e[1];
+          closePorductSelect.append(option)          
+        // }
+      })
+    }
+  }
+
+  function addadditionsSurInput(e) {
+    var addSearchInput = document.querySelector("#addsur-input").value;
+    var addSearchValues = addSearchInput.split(/\s/).filter(a => a != '');
+
+    var docSelect = document.querySelector("#select-doc");
+
+    var docSelectValue = docSelect.options[docSelect.selectedIndex].value.toString();
+    var docSurNameValue = docsurNamedata.filter(a => a[0] === docSelectValue).map((b) => b[1]);
+    var docSurFilter = docSurNameValue.filter(a => addSearchValues.some(b => a.toString().toLowerCase().includes(b.toString().toLowerCase())))
+    
+    var addSurSelect = document.querySelector('#addsur-select');
+    addSurSelect.options[0].selected = true
+    addSurSelect.options.length = 1;
+
+    var docSurNameValue = docsurNamedata.filter(a => a[0] === docSelectValue).map((b) => b[1]);
+    
+    if (addSearchInput) {
+      docSurFilter.forEach((a) => {
+        var option = document.createElement('option');
+        option.innerText = a;
+        addSurSelect.append(option)
+      })
+    } else {
+      docSurNameValue.forEach((a) => {
+        var option = document.createElement('option');
+        option.innerText = a;
+        addSurSelect.append(option)
+      })
+    }
+  }
+
+
+  function additionsSur(e) {
+    var chooseDocSelect = document.querySelector('#select-doc');
+    var docname = chooseDocSelect.options[chooseDocSelect.selectedIndex].value;
+    var additionSurId = document.querySelector('#addsur-select');
+    var additionSurValue = additionSurId.options[additionSurId.selectedIndex].value;
+    
+    var bomNumquery = document.querySelectorAll('.bom-number');
+    var bomNum = [...bomNumquery].map((a) => Number(a.textContent));
+    var bomNumFilter = bomNum.filter(a => a<= 1000);
+    var bomNumMax = bomNumFilter.length > 0 ? Math.max(...bomNumFilter) : 0;
+    
+    var productObj = {};
+    productName.map(a => productObj[a[1]] = a[7]);
+
+    var resultArray = additionSurValue ? docsurInfodata.filter((b) => b[0] === docname && b[1] === additionSurValue).map((a,ai) => [bomNumMax+ai+1,a[1], a[2],a[4],productObj[a[4]],a[5]]) : [];
+
+    if (additionSurId.selectedIndex === 0) {
+      document.getElementById('bomResults').innerHTML = "";
+    } else {
+      var afterDocSurResultBox = document.getElementById('bomResults');
+      var afterDocTemplatBox = document.getElementById('bomrowTemplate');
+      var afterDocSurTemplat = afterDocTemplatBox.content;
+
+      resultArray.forEach((e) => {
+        var afterDocSurTr = afterDocSurTemplat.cloneNode(true);
+        var bomNum = afterDocSurTr.querySelector('.bom-number');
+        var bomSurname = afterDocSurTr.querySelector('.bom-surname');
+        var bomStandard = afterDocSurTr.querySelector('.standard');
+        var bomProduct = afterDocSurTr.querySelector('.product-name');
+        var bomUseStandard = afterDocSurTr.querySelector('.use-standard');
+        var bomProductUse = afterDocSurTr.querySelector('.product-use')
+        
+        
+        bomNum.textContent = e[0];
+        bomSurname.textContent = e[1];
+        bomStandard.textContent = e[2];
+        bomProduct.textContent = e[3];
+        bomUseStandard.textContent = e[4]
+        bomProductUse.value = e[5];
+        
+        afterDocSurResultBox.append(afterDocSurTr);
+      })
+    }
+  }
+
+  function selectResult(e) {
+    var closePorduct = e.target.closest(".bomresult-box");
+    var selectQuery = closePorduct.querySelector('#producnames');
+    var selectValue = selectQuery.options[selectQuery.selectedIndex].value.toString().toLowerCase();
+    selectQuery.selectedIndex === 0 ? selectQuery.options[0].value = "" : selectQuery.options[0].value = selectValue;
+
+    var selectStandard = closePorduct.querySelector('.standard');
+    var selectUseStandard = closePorduct.querySelector('.use-standard');
+
+    var productObj = {};
+    productName.map(a => productObj[a[1].toString().toLowerCase()] = [a[4],a[7]]);
+
+    if(productObj[selectValue]) {
+      selectStandard.textContent = productObj[selectValue][0];
+      selectUseStandard.textContent = productObj[selectValue][1];
+    } else {
+      selectStandard.textContent = '';
+      selectUseStandard.textContent = '';
+    }
+  }
+
+  function displayTransConfirm(e) {
+    if (e.target.dataset.buttonState==='transs') {
+      e.target.previousElementSibling.classList.remove('d-none')
+      e.target.textContent = `취소`
+      e.target.dataset.buttonState = 'transcancle'
+    } else {
+      e.target.previousElementSibling.classList.add('d-none')
+      e.target.textContent = e.target.previousElementSibling.textContent
+      e.target.dataset.buttonState='transs'
+    }
+  }
+
+  function sendBominput(e) {
+    if (validation()) {
+      var hwanname = document.getElementById('hwanname').value.toString();
+      var number = document.getElementById('phon-four').value.toString();
+      var surdateraw = document.getElementById('surdate').valueAsDate;
+      var chooseDocSelect = document.querySelector('#select-doc');
+      var docname = chooseDocSelect.options[chooseDocSelect.selectedIndex].value;
+      var surdate = surdateraw.getFullYear().toString()+'-'+(surdateraw.getMonth()+1).toString().padStart(2,'0')+'-'+surdateraw.getDate().toString().padStart(2,'0')
+      var floorraw = document.getElementById("input-floor");
+      var floor = floorraw.options[floorraw.selectedIndex].value.toString();
+      var starttime = document.querySelector("#surstarttime").value.toString();
+      var endtime = document.querySelector("#surendtime").value.toString();
+
+      var searchValue = [hwanname,number,surdate,docname,floor].map(a => a.toString().toLowerCase());
+      var filter = saveUniqueData.filter(a => a[0] === searchValue[0] && a[1] === searchValue[1] && a[2] === searchValue[2] && a[3] === searchValue[3] && a[4] === searchValue[4]);
+
+      var msg = document.getElementById('save-success-massage');
+
+      if (filter.length > 0) {
+        msg.classList.remove('invisible');
+        msg.classList.remove('alert-success');
+        msg.classList.add('alert-danger');
+        msg.textContent = '중복된 내용이 있습니다. BOM 수정에서 수정/추가 해주세요.';
+        setTimeout(function() {
+          msg.classList.add('invisible');
+          msg.classList.remove('alert-danger');
+          msg.classList.add('alert-success');
+          msg.textContent = '성공적으로 전송되었습니다!';
+        },3000)
+      } else {
+        var sendBomQuery = document.querySelectorAll('.bomresult-box');
+        var sendArray = [];
+
+        sendBomQuery.forEach((a) => {
+          var trNumber = a.querySelector(".bom-number").textContent;
+          var trSurname = a.querySelector(".bom-surname").textContent;
+          var trStan = a.querySelector(".standard").textContent;
+          var trSelect = a.querySelector('#producnames');
+          var trPro = trSelect ? trSelect.options[trSelect.selectedIndex].value.toString() : a.querySelector(".product-name").textContent;
+          var trUseStan = a.querySelector(".use-standard").textContent;
+          var trUse = a.querySelector(".product-use").value;
+          sendArray.push([trNumber,trSurname,trStan,trPro,trUseStan,trUse,hwanname,number,surdate,docname,floor,starttime,endtime])
+        })
+
+        if (sendArray.length > 0) {
+          loadingStart();
+          google.script.run
+          .withSuccessHandler(function() {
+            document.getElementById('save-success-massage').classList.remove('invisible');
+            
+            var docIndex = chooseDocSelect.selectedIndex;
+            var flowIndex = floorraw.selectedIndex;
+            
+            document.querySelector("#hwanname").value = "";
+            document.querySelector("#phon-four").value = "";
+            document.querySelector('#input-floor').options[0].selected = true;
+            var ptime = new Date();
+            document.getElementById("surdate").valueAsDate = ptime;
+            document.getElementById("surstarttime").value = `${ptime.getHours().toString()}:${ptime.getMinutes().toString()}`;
+            document.getElementById("surendtime").value = `${ptime.getHours().toString()}:${ptime.getMinutes().toString()}`;
+
+            document.getElementById('bomResults').innerHTML = "";
+
+
+            document.querySelector("#addsur-select").removeAttribute("disabled","");
+            chooseDocSelect.options[docIndex].selected = true;
+            floorraw.options[flowIndex].selected = true;
+
+            e.target.classList.add('d-none')
+            e.target.nextElementSibling.textContent = '전송'
+            e.target.nextElementSibling.dataset.buttonState='transs'
+
+            loadingEnd();
+            setTimeout(function() {
+            document.getElementById('save-success-massage').classList.add('invisible')
+            },2000)
+          })
+          .withFailureHandler(onFailure)
+          .transInput(sendArray)
+        } else {
+          document.getElementById('save-success-massage').classList.remove('invisible')
+          document.getElementById('save-success-massage').textContent = '전송 할 내용이 없습니다.'
+          setTimeout(function() {
+            document.getElementById('save-success-massage').classList.add('invisible')
+            document.getElementById('save-success-massage').textContent = '성공적으로 전송되었습니다!'
+          },3000)
+        }
+      }
+    }
+  }
+
+  function pyeExecute(e) {
+    var motherBox = document.querySelector("#bomResults");
+    var closeBox = e.target.closest(".bomresult-box");
+    var closeBoxClone = closeBox.cloneNode(true);
+    
+    var num = closeBoxClone.querySelector(".bom-number").textContent;
+    var surname = closeBoxClone.querySelector(".bom-surname").textContent;
+    var productnameQuery = closeBoxClone.querySelector(".product-name");
+    var productnameSelect = closeBoxClone.querySelector(".product-name select");
+    var productname = productnameSelect ? productnameSelect.options[productnameSelect.selectedIndex].value : closeBoxClone.querySelector(".product-name").textContent;
+
+    closeBoxClone.querySelector(".edit-button").classList.add("d-none");
+    closeBoxClone.querySelector(".pye-button").classList.add("d-none");
+    closeBoxClone.querySelector(".pye2-button").classList.add("d-none");
+
+    var bomNumquery = document.querySelectorAll('.bom-number');
+    var bomNum = [...bomNumquery].map((a) => Number(a.textContent));
+    var bomNumFilter = bomNum.filter(a => a<= 1000);
+    var bomNumMax = bomNumFilter.length > 0 ? Math.max(...bomNumFilter) : 0;
+
+    closeBoxClone.querySelector(".bom-number").textContent = bomNumMax + 1;
+    closeBoxClone.querySelector(".bom-surname").textContent = surname + "|오염";
+    closeBoxClone.querySelector(".bom-surname").classList.add("bg-danger");
+    closeBoxClone.querySelector(".bom-surname").classList.add("bg-gradient");
+    closeBoxClone.querySelector(".bom-surname").classList.add("bg-opacity-25");
+    closeBoxClone.querySelector(".product-name").textContent = productname + "|오염";
+    closeBoxClone.querySelector(".product-name").classList.add("bg-danger");
+    closeBoxClone.querySelector(".product-name").classList.add("bg-gradient");
+    closeBoxClone.querySelector(".product-name").classList.add("bg-opacity-25");
+
+    var allBox = document.querySelectorAll(".bomresult-box");
+    var allobj = {};
+    allBox.forEach(a => allobj[a.querySelector(".bom-surname").textContent] = [])
+    allBox.forEach(a => allobj[a.querySelector(".bom-surname").textContent].push(a.querySelector(".product-name").textContent))
+    if(productname) {
+      if (!allobj[surname+"|오염"]) {
+        motherBox.append(closeBoxClone);
+      } else if (allobj[surname+"|오염"]) {
+        if (!allobj[surname+"|오염"].includes(productname+"|오염")) {
+          motherBox.append(closeBoxClone);
+        }
+      }
+    }
+  }
+
+  function pyeExecute2(e) {
+    var motherBox = document.querySelector("#bomResults");
+    var closeBox = e.target.closest(".bomresult-box");
+    var closeBoxClone = closeBox.cloneNode(true);
+    
+    var num = closeBoxClone.querySelector(".bom-number").textContent;
+    var surname = closeBoxClone.querySelector(".bom-surname").textContent;
+    var productnameQuery = closeBoxClone.querySelector(".product-name");
+    var productnameSelect = closeBoxClone.querySelector(".product-name select");
+    var productname = productnameSelect ? productnameSelect.options[productnameSelect.selectedIndex].value : closeBoxClone.querySelector(".product-name").textContent;
+
+    closeBoxClone.querySelector(".edit-button").classList.add("d-none");
+    closeBoxClone.querySelector(".pye-button").classList.add("d-none");
+    closeBoxClone.querySelector(".pye2-button").classList.add("d-none");
+
+    var bomNumquery = document.querySelectorAll('.bom-number');
+    var bomNum = [...bomNumquery].map((a) => Number(a.textContent));
+    var bomNumFilter = bomNum.filter(a => a<= 1000);
+    var bomNumMax = bomNumFilter.length > 0 ? Math.max(...bomNumFilter) : 0;
+
+    closeBoxClone.querySelector(".bom-number").textContent = bomNumMax + 1;
+    closeBoxClone.querySelector(".bom-surname").textContent = surname + "|파손";
+    closeBoxClone.querySelector(".bom-surname").setAttribute("style","background-color:#c97c00; color:white")
+    closeBoxClone.querySelector(".product-name").textContent = productname + "|파손";
+    closeBoxClone.querySelector(".product-name").setAttribute("style","background-color:#c97c00; color:white")
+
+    var allBox = document.querySelectorAll(".bomresult-box");
+    var allobj = {};
+    allBox.forEach(a => allobj[a.querySelector(".bom-surname").textContent] = [])
+    allBox.forEach(a => allobj[a.querySelector(".bom-surname").textContent].push(a.querySelector(".product-name").textContent));
+    if(productname) {
+      if (!allobj[surname+"|파손"]) {
+        motherBox.append(closeBoxClone);
+      } else if (allobj[surname+"|파손"]) {
+        if (!allobj[surname+"|파손"].includes(productname+"|파손")) {
+          motherBox.append(closeBoxClone);
+        }
+      }
+    }
+  }
+</script>

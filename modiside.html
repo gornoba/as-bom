@@ -1,0 +1,257 @@
+<script>
+  function loadModify() {
+    loadView({func:'loadModify', callback:loadSaveData});
+  }
+
+  function loadAfterModify(e) {
+    loadView({func:"loadChooseView", callback:loadAfterModifyData, params:{
+      hwanname : e.target.dataset.hhwanname,
+      phonNumber : e.target.dataset.pphonNumber,
+      surdate : e.target.dataset.ssurdate,
+      start : e.target.dataset.ssurstart,
+      end : e.target.dataset.ssurend,
+      docname : e.target.dataset.ddocname,
+      floor : e.target.dataset.ffloor,
+    }})
+  }
+
+  function loadSaveData() {
+    loadingStart();
+    google.script.run.withSuccessHandler(function(dataReturned) {
+      saveUniqueData = dataReturned.slice();
+      loadingEnd();
+    }).modiUniqueData();
+  }
+
+  function modiSearch(e) {
+    var searchInput = document.getElementById("modiInput").value.toString().toLowerCase();
+    var searchWord = searchInput.split(/\s+/);
+    
+    var saveFilter = saveUniqueData.filter(a => searchWord.every(word => a.some(col => a.toString().toLowerCase().includes(word))));
+    var saveUnique = searchInput ? Array.from(new Set(saveFilter.join("|").split("|"))).map(a => a.split(',')) : [];
+    
+    var modiBigBox = document.getElementById("modiResults");
+    var modiTemplateBox = document.getElementById("modiTemplate");
+    var modiTemplate = modiTemplateBox.content;
+
+    modiBigBox.innerHTML = "";
+
+    saveUnique.forEach((a) => {
+      var modiTr = modiTemplate.cloneNode(true);
+      var hwanname = modiTr.querySelector(".hwanname");
+      var phonNumber = modiTr.querySelector(".phonNumber");
+      var surdate = modiTr.querySelector(".surdate");
+      var surstart = modiTr.querySelector(".surstart-time");
+      var surend = modiTr.querySelector(".surend-time");
+      var docname = modiTr.querySelector(".docname");
+      var floor = modiTr.querySelector(".floor");
+      var modiChooseButton = modiTr.querySelector('.modi-choose-button');
+
+      hwanname.textContent = a[0];
+      phonNumber.textContent = a[1];
+      surdate.textContent = a[2];
+      surstart.textContent = a[5];
+      surend.textContent = a[6];
+      docname.textContent = a[3];
+      floor.textContent = a[4];
+
+      modiChooseButton.dataset.hhwanname = a[0];
+      modiChooseButton.dataset.pphonNumber = a[1];
+      modiChooseButton.dataset.ssurdate = a[2];
+      modiChooseButton.dataset.ssurstart = a[5];
+      modiChooseButton.dataset.ssurend = a[6];
+      modiChooseButton.dataset.ddocname = a[3];
+      modiChooseButton.dataset.ffloor = a[4];
+
+      modiBigBox.append(modiTr);
+    })
+  }
+
+  function loadAfterModifyData(params) {
+    loadingStart();
+    document.querySelector("#head-line").textContent = 'BOM 수정';
+    document.getElementById('send-button').classList.remove('bominput');
+    document.getElementById('send-button').classList.add('modibominput');
+    document.querySelector('#select-doc').setAttribute("disabled","")
+    var hwanname = params.hwanname;
+    var phonNumber = params.phonNumber;
+    var surdate = params.surdate;
+    var surstart = params.start === 'undefined' ? null : params.start; 
+    var surend = params.end === 'undefined' ? null : params.end;
+    var docname = params.docname;
+    var floor = params.floor;
+
+    google.script.run.withSuccessHandler(function(dataReturned) {
+        docsurNamedata = dataReturned.slice();
+
+      var docnames = Array.from(new Set(docsurNamedata.map(a => a[0])));
+      var chooseDocSelect = document.querySelector('#select-doc');
+      docnames.forEach((a,ai) => {
+        var option = document.createElement('option');
+        option.innerText = a;
+        chooseDocSelect.append(option)
+        if (a === docname) {
+          chooseDocSelect.options[ai+1].selected = true;
+        }
+      })
+
+      var docsurFilterValue = docsurNamedata.filter(a => a[0] === docname);
+      var addSurSelect = document.querySelector('#addsur-select');
+      docsurFilterValue.forEach((a) => {
+        var option = document.createElement('option');
+        option.innerText = a[1];
+        addSurSelect.append(option)
+      })
+    }).docsurName();
+    
+    document.getElementById('hwanname').value = hwanname;
+    document.getElementById('phon-four').value = phonNumber;
+    document.getElementById('surdate').valueAsDate = new Date(surdate);
+    document.getElementById('surstarttime').value = surstart;
+    document.getElementById('surendtime').value = surend;
+    document.getElementById('addsur-input').removeAttribute("readonly");
+    document.getElementById('addsur-select').removeAttribute("disabled");
+    var floorSelect = document.getElementById('input-floor');
+    [...floorSelect].forEach((a,ai) => {
+      var floorValue = a.value
+      floorValue == floor && floorSelect[ai].setAttribute("selected","")
+    })
+
+    google.script.run.withSuccessHandler(function(dataReturned) {
+      productName = dataReturned.slice();
+    }).bomResearchData();
+
+    google.script.run.withSuccessHandler(function(dataReturned) {
+      docsurInfodata = dataReturned.slice();
+    }).docsurinfo();
+
+    google.script.run.withSuccessHandler(function(dataReturned) {
+      var saveModiFilter = dataReturned.filter((a) => a[1].toString().toLowerCase() === hwanname.toString().toLowerCase() && a[2] === phonNumber && a[3] === surdate && a[4] === docname && a[11].toString().toLowerCase() === floor.toString().toLowerCase() && a[13] == surstart && a[14] == surend)
+
+      var afterDocSurResultBox = document.getElementById('bomResults');
+      var afterDocTemplatBox = document.getElementById('bomrowTemplate');
+      var afterDocSurTemplat = afterDocTemplatBox.content;
+
+      saveModiFilter.forEach((e) => {
+        var afterDocSurTr = afterDocSurTemplat.cloneNode(true);
+        var bomNum = afterDocSurTr.querySelector('.bom-number');
+        var bomSurname = afterDocSurTr.querySelector('.bom-surname');
+        var bomStandard = afterDocSurTr.querySelector('.standard');
+        var bomProduct = afterDocSurTr.querySelector('.product-name');
+        var bomUseStandard = afterDocSurTr.querySelector('.use-standard');
+        var bomProductUse = afterDocSurTr.querySelector('.product-use');
+        var modibutton = afterDocSurTr.querySelector('.before-delete-button');
+        
+        bomNum.textContent = e[0];
+        bomSurname.textContent = e[5];
+        bomStandard.textContent = e[10];
+        bomProduct.textContent = e[6];
+        bomUseStandard.textContent = e[12]
+        bomProductUse.value = e[8];
+        modibutton.classList.add('modi')
+        
+        afterDocSurResultBox.append(afterDocSurTr);
+      })
+      loadingEnd();
+    }).modiData();
+  }
+
+  function displayAllDeleteConfirm(e) {
+    if (e.target.dataset.buttonState==='삭제') {
+      e.target.previousElementSibling.classList.remove('d-none')
+      e.target.textContent = '취소'
+      e.target.dataset.buttonState = '삭제취소'
+    } else {
+      e.target.previousElementSibling.classList.add('d-none')
+      e.target.textContent = '전체삭제'
+      e.target.dataset.buttonState='삭제'
+    }
+  }
+
+  function allDelete(e) {
+    var closeSet = e.target.closest(".result-box");
+    var hwanname = closeSet.querySelector(".hwanname").textContent;
+    var phonnumber = closeSet.querySelector(".phonNumber").textContent;
+    var surdate = closeSet.querySelector(".surdate").textContent;
+    var surstart = closeSet.querySelector(".surstart-time").textContent;
+    var surend = closeSet.querySelector(".surend-time").textContent;
+    var docname = closeSet.querySelector(".docname").textContent;
+    var floor = closeSet.querySelector(".floor").textContent;
+
+    loadingStart();
+    google.script.run.withSuccessHandler(function() {
+      e.target.closest('.result-box').remove();
+      var ids = [];
+      saveUniqueData.forEach((a,ai) => {
+        if (a[0] === hwanname && a[1] === phonnumber && a[2] === surdate && a[3] === docname && a[4] === floor && a[5] ? a[5] : '' === surstart && a[6] ? a[6] : '' === surend) {
+          ids.push(ai);
+        }
+      })
+      ids.sort((a,b) => b-a);
+      ids.forEach((a) => {
+        saveUniqueData.splice(a,1)
+      })
+      loadingEnd();
+    }).allDelete(hwanname, phonnumber, surdate, docname, surstart, surend)
+  }
+
+  function modiExcution(e) {
+    if (validation()) {
+      var hwanname = document.getElementById('hwanname').value.toString();
+      var number = document.getElementById('phon-four').value.toString();
+      var surdateraw = document.getElementById('surdate').valueAsDate;
+      var chooseDocSelect = document.querySelector('#select-doc');
+      var docname = chooseDocSelect.options[chooseDocSelect.selectedIndex].value;
+      var surdate = surdateraw.getFullYear().toString()+'-'+(surdateraw.getMonth()+1).toString().padStart(2,'0')+'-'+surdateraw.getDate().toString().padStart(2,'0')
+      var floorraw = document.getElementById("input-floor");
+      var floor = floorraw.options[floorraw.selectedIndex].value.toString();
+      var starttime = document.querySelector("#surstarttime").value.toString();
+      var endtime = document.querySelector("#surendtime").value.toString();
+      
+      var sendBomQuery = document.querySelectorAll('.bomresult-box');
+      var modiArray = [];
+
+      sendBomQuery.forEach((a) => {
+        var trNumber = a.querySelector(".bom-number").textContent;
+        var trSurname = a.querySelector(".bom-surname").textContent;
+        var trStan = a.querySelector(".standard").textContent;
+        var trSelect = a.querySelector('#producnames');
+        var trPro = trSelect ? trSelect.options[trSelect.selectedIndex].value.toString() : a.querySelector(".product-name").textContent;
+        var trUseStan = a.querySelector(".use-standard").textContent;
+        var trUse = a.querySelector(".product-use").value;
+        modiArray.push([trNumber,trSurname,trStan,trPro,trUseStan,trUse,hwanname,number,surdate,docname,floor,starttime,endtime])
+      })
+
+      if (modiArray.length > 0) {
+        loadingStart();          
+        google.script.run.withSuccessHandler(function() {
+          document.getElementById('save-success-massage').classList.remove('invisible');
+            
+            afterDocSurInfo();
+
+            e.target.classList.add('d-none')
+            e.target.nextElementSibling.textContent = '전송'
+            e.target.nextElementSibling.dataset.buttonState='transs'
+
+            loadingEnd();
+            setTimeout(function() {
+              document.getElementById('save-success-massage').classList.add('invisible');
+              loadModify();
+            },2000);
+            
+        }).modiInput(modiArray)
+      } else {
+        document.getElementById('save-success-massage').classList.remove('invisible')
+        document.getElementById('save-success-massage').textContent = '전송 할 내용이 없습니다.'
+        setTimeout(function() {
+          document.getElementById('save-success-massage').classList.add('invisible')
+          document.getElementById('save-success-massage').textContent = '성공적으로 전송되었습니다!'
+        },3000)
+      }
+    }
+  }
+
+  function modicancel(e) {
+    loadModify();
+  }
+</script>

@@ -1,0 +1,180 @@
+<script>
+  function selectEventHandler(e)  {
+    if (e.target.matches('#producnames')) {
+      selectResult(e);
+    }
+
+    if(e.target.matches('#addsur-select')) {
+      additionsSur(e);
+    }
+
+    if (e.target.matches('#select-doc')) {
+      releaseOptions(e);
+    }
+
+    if(e.target.matches('#surmodi-producnames')) {
+      surmodiSelectResult(e);
+    }
+
+    if(e.target.matches("#surmodidocname")) {
+      surmodiSelectDoc(e);
+    }
+
+    if(e.target.matches("#surmodisurname")) {
+      surmodiSelectSur(e);
+    }
+
+    if(e.target.matches("#copy-doctor")) {
+      allcopyDocResult(e);
+    }
+
+    if(e.target.matches("#copy-sur")) {
+      copySurResult(e);
+    }
+  }
+
+  function inputEventHandler(e) {
+    if (e.target.matches('#docsurInput')) {
+      searchDocSur();
+    }
+
+    if (e.target.matches("#productsearch")) {
+      searchProduct(e);
+    }
+
+    if (e.target.matches("#modiInput")) {
+      modiSearch(e);
+    }
+
+    if(e.target.matches("#research-input")) {
+      researchSearch(e);
+    }
+
+    if(e.target.matches("#surModi-input")) {
+      surModiBaseSearch(e);
+    }
+
+    if(e.target.matches("#surmodi-productsearch")) {
+      surmodiSearchProduct(e);
+    }
+
+    if(e.target.matches("#addsur-input")) {
+      addadditionsSurInput(e);
+    }
+
+    if(e.target.matches("#surmodi-newdoc")) {
+      surmodiNewdoc(e);
+    }
+  }
+
+  function clickEventHandler(e) {
+    if(e.target.matches('.bominput-cancle')) {
+      displayTransConfirm(e)
+    }
+    
+    if (e.target.matches('.bomsearch')) {
+      afterDocSurInfo(e);
+    }
+
+    if(e.target.matches(".before-delete-button")) {
+      afterDelete(e);
+    }
+
+    if(e.target.matches(".edit-button")) {
+      addProduct(e);
+    }
+
+    if (e.target.matches(".bominput")) {
+      sendBominput(e);
+    }
+
+    if(e.target.matches(".modi-choose-button")) {
+      loadAfterModify(e);
+    }
+
+    if(e.target.matches(".modibominput")) {
+      modiExcution(e);
+    }
+
+    if(e.target.matches('.all-before-delete-button, .surmodi-all-before-delete-button')) {
+      displayAllDeleteConfirm(e);
+    }
+
+    if (e.target.matches(".all-delete-button")) {
+      allDelete(e);
+    }
+
+    if(e.target.matches(".surmodi-before-delete-button, .modiinput-cancle")) {
+      displaySurModiDeleteConfirm(e);
+    }
+
+    if(e.target.matches(".surmodi-delete-button")) {
+      surmodiDelete(e);
+    }
+
+    if(e.target.matches(".surmodi-all-delete-button")) {
+      surmodiAllDelete(e);
+    }
+
+    if(e.target.matches(".surmodi-edit-button")) {
+      surmodiAddProduct(e);
+    }
+
+    if(e.target.matches(".surmodiinput")) {
+      surmodiExcution(e);
+    }
+
+    if(e.target.matches(".surmodicancel")) {
+      backSurModi(e);
+    }
+
+    if(e.target.matches(".newsur-button")) {
+      newSur(e);
+    }
+
+    if(e.target.matches(".modisur-button")) {
+      surModiHide(e);
+    }
+
+    if(e.target.matches(".all-copy")) {
+      allcopy(e);
+    }
+
+    if(e.target.matches(".modinewsur")) {
+      surmodiAddProduct(e);
+    }
+
+    if(e.target.matches(".pye-button")) {
+      pyeExecute(e);
+    }
+
+    if(e.target.matches(".pye2-button")) {
+      pyeExecute2(e);
+    }
+  }
+
+  function loadingStart() {
+    document.getElementById('loading').classList.remove('invisible')
+  }
+
+  function loadingEnd() {
+    document.getElementById('loading').classList.add('invisible')
+  }
+
+  function navEventHandler(e) {
+    if(e.target.matches('.nav-link')) {
+      activeTabChange(e)
+    }
+  }
+
+  document.getElementById('main-navigation').addEventListener('click', navEventHandler);
+  document.getElementById('input-page').addEventListener('click', loadChooseView);
+  document.getElementById('input-modify').addEventListener('click', loadModify);
+  document.getElementById('bom-research').addEventListener('click', loadBomResearch);
+  document.getElementById('input-sur-modify').addEventListener('click', loadSurModi);
+  document.getElementById('app').addEventListener('input', inputEventHandler);
+  document.getElementById('app').addEventListener('click', clickEventHandler);
+  document.getElementById('app').addEventListener('change', selectEventHandler);
+  document.addEventListener('DOMContentLoaded', loadChooseView);
+      
+</script>

@@ -1,0 +1,62 @@
+<script>
+  function loadBomResearch() {
+    loadView({func:'loadBomResearch', callback:loadBomResearchData})
+  }
+
+  function loadBomResearchData() {
+    loadingStart();
+    google.script.run.withSuccessHandler(function(dataReturned) {
+      researchData = dataReturned.slice();
+      
+      var researchBigBox = document.getElementById("researchResuls");
+      var researchTemplateBox = document.getElementById("researchTemplate");
+      var researchTemplate = researchTemplateBox.content;
+
+      researchData.forEach((e) => {
+        var researchTr = researchTemplate.cloneNode(true);
+        researchTr.querySelector(".number").textContent = e[0];
+        researchTr.querySelector(".product").textContent = e[1];
+        researchTr.querySelector(".code").textContent = e[2];
+        researchTr.querySelector(".cell").textContent = e[3];
+        researchTr.querySelector(".standard").textContent = e[4];
+        researchBigBox.append(researchTr);
+      })
+      loadingEnd();
+    }).bomResearchData();
+
+  }
+
+  function researchSearch(e) {
+    var researchInput = document.getElementById('research-input').value.toString().toLowerCase();
+    var inputSplit = researchInput.split(/\s+/);
+    var researchFilter = researchData.filter((a) => inputSplit.every(word => a.some(col => a[1].toString().toLowerCase().includes(word))));
+
+    var researchBigBox = document.getElementById("researchResuls");
+    var researchTemplateBox = document.getElementById("researchTemplate");
+    var researchTemplate = researchTemplateBox.content;
+    researchBigBox.innerHTML = "";
+
+    if (researchInput) {
+      researchFilter.forEach((e) => {
+        var researchTr = researchTemplate.cloneNode(true);
+        researchTr.querySelector(".number").textContent = e[0];
+        researchTr.querySelector(".product").textContent = e[1];
+        researchTr.querySelector(".code").textContent = e[2];
+        researchTr.querySelector(".cell").textContent = e[3];
+        researchTr.querySelector(".standard").textContent = e[4];
+        researchBigBox.append(researchTr);
+      })
+    } else {
+      researchData.forEach((e) => {
+
+        var researchTr = researchTemplate.cloneNode(true);
+        researchTr.querySelector(".number").textContent = e[0];
+        researchTr.querySelector(".product").textContent = e[1];
+        researchTr.querySelector(".code").textContent = e[2];
+        researchTr.querySelector(".cell").textContent = e[3];
+        researchTr.querySelector(".standard").textContent = e[4];
+        researchBigBox.append(researchTr);
+      })
+    }
+  }
+</script>

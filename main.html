@@ -1,0 +1,111 @@
+<!doctype html>
+<html>
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+
+    <?!= include("csscode"); ?>
+
+  </head>
+  <body>
+    <div class="container" id="main-container">
+      <nav id="main-navigation">
+        <ul class="nav nav-tabs main-nav">
+          <li class="nav-item">
+            <div class="nav-link active" id='input-page'>BOM 입력</div>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" id="input-modify">BOM 수정</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" id="input-sur-modify">시수술 추가/수정</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" id="bom-research">BOM 조사품목</a>
+          </li>
+        </ul>
+      </nav>
+
+      <div id="app"></div>
+
+      <div id='loading' class="d-flex justify-content-center d-flex align-items-center invisible">
+        <div class="spinner-border" style="width: 3rem; height: 3rem;" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+      </div>
+    </div>
+    
+    <div id='loading' class="d-flex justify-content-center d-flex align-items-center invisible">
+      <div class="spinner-border" style="width: 3rem; height: 3rem;" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>
+    
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+    
+    <script>
+      var docsurInfodata
+      var docsurNamedata
+      var productName
+      var saveData
+      var researchData
+      var surModiData
+      var saveUniqueData
+
+      setInterval(function () {
+        google.script.run.withSuccessHandler(function(dataReturned) {
+          saveUniqueData = dataReturned.slice();
+        }).modiUniqueData();
+      }, 600000);
+      
+      function loadView(options) {
+        loadingStart();
+        const pageid = options.id ? options.id : 'app';
+        const cb = options.callback ? options.callback : function(){};
+        google.script.run.withSuccessHandler(function(html) {
+          document.getElementById(pageid).innerHTML = html;
+          loadingEnd();
+          options.params ? cb(options.params) : cb()
+        })[options.func]();
+      };
+
+      function activeTabChange(e) {
+        var navLinks = document.querySelectorAll('.main-nav .nav-link')
+        navLinks.forEach((e) => e.classList.remove('active'))
+        e.target.classList.add('active')
+      }
+
+      function validation() {
+        var fieldsToValidate = document.querySelectorAll(".input-front select, #bomResults input, #bomResults select, #input_hide_valid input, #input_hide_valid select, .modi-input-front select,#modiResults input, #modiResults select, #reqii select, #reqii input" )
+
+        Array.prototype.forEach.call(fieldsToValidate, function(el) {
+          
+          if(el.checkValidity()) {
+            el.classList.remove('is-invalid');
+          } else {
+            el.classList.add('is-invalid');
+          }
+        })
+
+        return Array.prototype.every.call(fieldsToValidate, function(el) {
+          return el.checkValidity();
+        })
+      }
+
+      function onFailure(err) {
+        alert('There was an error!' + err.message);
+        loadingEnd();
+      }
+    </script>
+    <?!= include("inputside"); ?>
+    <?!= include("modiside"); ?>
+    <?!= include("surmodiside"); ?>
+    <?!= include("researchside"); ?>
+    <?!= include("event"); ?>
+   
+  </body>
+</html>

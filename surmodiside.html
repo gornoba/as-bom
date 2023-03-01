@@ -1,0 +1,398 @@
+<script>
+  function loadSurModi() {
+    loadView({func:'loadSurmodiHide', callback:loadSurModiInfo})
+  }
+
+  function loadSurModiInfo(e) {
+    loadingStart();
+    google.script.run.withSuccessHandler(function(dataReturned) {
+      docsurInfodata = dataReturned.slice();
+
+      var docUnique = Array.from(new Set(docsurInfodata.map(a => a[0])));
+      var surModiDocSelect = document.querySelector("#copy-doctor");
+      surModiDocSelect.options.length = 1;
+      surModiDocSelect.options[0].selected = true;
+      docUnique.forEach((a) => {
+        var option = document.createElement('option');
+        option.innerText = a;
+        surModiDocSelect.append(option);
+      })
+
+      var modiDocSelect = document.querySelector("#surmodidocname");
+      modiDocSelect.options.length = 1;
+      modiDocSelect.options[0].selected = true;
+      docUnique.forEach((a) => {
+        var option = document.createElement('option');
+        option.innerText = a;
+        modiDocSelect.append(option);
+      })
+    }).docsurinfo();
+
+    google.script.run.withSuccessHandler(function(dataReturned) {
+      productName = dataReturned.slice();
+      loadingEnd();
+    }).products();   
+  }
+
+  function surmodiSelectDoc(e) {
+    var surModiDocSelect = document.querySelector("#surmodidocname");
+    var surModiDocValue = surModiDocSelect.options[surModiDocSelect.selectedIndex].value;
+    var surModiSurSelect = document.querySelector("#surmodisurname");
+
+    if (surModiDocSelect.selectedIndex > 0) {
+      document.querySelector("#surmodisurname").removeAttribute("disabled");
+      document.querySelector("#copy-doctor").removeAttribute("disabled");
+      document.querySelector("#surmodi-newdoc").classList.add("d-none");
+      document.querySelector("#surmodi-newdoc").removeAttribute("required")
+      var surModiDocFilter = docsurInfodata.filter(a => a[0] === surModiDocValue).map(b => b[1]);
+      var surModiSur = Array.from(new Set(surModiDocFilter));
+      surModiSurSelect.options.length = 1;
+      surModiSurSelect.options[0].selected = true;
+      surModiSur.forEach((a) => {
+        var option = document.createElement("option");
+        option.textContent = a;
+        surModiSurSelect.append(option);
+      })
+    } else {
+      document.querySelector("#surmodisurname").setAttribute("disabled","");
+      document.querySelector("#copy-doctor").setAttribute("disabled","");
+      document.querySelector("#surmodi-newdoc").classList.remove("d-none");
+      document.querySelector("#surmodi-newdoc").setAttribute("required","")
+      surModiSurSelect.options.length = 1;
+      surModiSurSelect.options[0].selected = true;
+    }
+  }
+
+  function surmodiNewdoc(e) {
+    var surmodiNewdocInput = document.querySelector("#surmodi-newdoc").value;
+    if (surmodiNewdocInput) {
+      document.querySelector("#copy-doctor").removeAttribute("disabled");
+    } else if(surmodiNewdocInput === '') {
+      document.querySelector("#copy-doctor").setAttribute("disabled","");
+    }
+  }
+
+  function surmodiSelectSur(e)  {
+    var surModiDocSelect = document.querySelector("#surmodidocname");
+    var surModiDocValue = surModiDocSelect.options[surModiDocSelect.selectedIndex].value;
+    var surModiSurSelect = document.querySelector("#surmodisurname");
+    var surModiSurValue = surModiSurSelect.options[surModiSurSelect.selectedIndex].value;
+
+    if (surModiSurSelect.selectedIndex > 0) {
+      document.querySelector("#surmodi-newsur").classList.add("d-none");
+      document.querySelector(".modinewsur").classList.add("d-none");
+
+      var obj = {};
+      productName.forEach(a => obj[a[0].toString().toLowerCase()] = [a[2],a[6]])
+      
+      var optionFilter = docsurInfodata.filter((a) => a[0] === surModiDocValue && a[1] === surModiSurValue)
+      var optionMap = optionFilter.map((a) => [a[7],a[1],a[2],a[4],obj[a[4].toString().toLowerCase()][1],a[5]])
+
+      var allCopyResultBox = document.getElementById('surmodiResults');
+      var allCopyTemplatBox = document.getElementById('surmodirowTemplate');
+      var allCopyTemplat = allCopyTemplatBox.content;
+
+      optionMap.forEach((a) => {
+        var allCopytr = allCopyTemplat.cloneNode(true);
+        var code = allCopytr.querySelector(".surmodi-code");
+        var sur = allCopytr.querySelector(".surmodi-surusrname");
+        var stan = allCopytr.querySelector(".surmodi-standard");
+        var pro = allCopytr.querySelector(".surmodi-product-name");
+        var useStan = allCopytr.querySelector(".surmodi-use-stan");
+        var use = allCopytr.querySelector(".surmodi-product-use");
+
+        code.textContent = a[0];
+        sur.textContent = a[1];
+        stan.textContent = a[2];
+        pro.textContent = a[3];
+        useStan.textContent = a[4];
+        use.value = a[5];
+
+        allCopyResultBox.append(allCopytr);
+      })
+    } else {
+      document.querySelector("#surmodi-newsur").classList.remove("d-none");
+      document.querySelector(".modinewsur").classList.remove("d-none");
+      document.getElementById('surmodiResults').innerHTML = "";
+    }
+  }
+
+  function allcopy(e) {
+    var copyDocSelect = document.querySelector("#copy-doctor");
+    var copyDocValue = copyDocSelect.options[copyDocSelect.selectedIndex].value.toString();
+    var obj = {};
+    productName.forEach(a => obj[a[0]] = [a[2],a[6]])
+    var surFilter = docsurInfodata.filter(a => a[0].toString() === copyDocValue.toString()).map((b) => [b[7],b[1],obj[b[4]][0],b[4],obj[b[4]][1],b[5]]);
+    
+    var allCopyResultBox = document.getElementById('surmodiResults');
+    var allCopyTemplatBox = document.getElementById('surmodirowTemplate');
+    var allCopyTemplat = allCopyTemplatBox.content;
+
+    surFilter.forEach((a) => {
+      var allCopytr = allCopyTemplat.cloneNode(true);
+      var sur = allCopytr.querySelector(".surmodi-surusrname");
+      var stan = allCopytr.querySelector(".surmodi-standard");
+      var pro = allCopytr.querySelector(".surmodi-product-name");
+      var useStan = allCopytr.querySelector(".surmodi-use-stan");
+      var use = allCopytr.querySelector(".surmodi-product-use");
+
+      sur.textContent = a[1];
+      stan.textContent = a[2];
+      pro.textContent = a[3];
+      useStan.textContent = a[4];
+      use.value = a[5];
+
+      allCopyResultBox.append(allCopytr);
+    })
+  }
+
+  function allcopyDocResult(e) {
+    var copyDocSelect = document.querySelector("#copy-doctor");
+    var copyDocValue = copyDocSelect.options[copyDocSelect.selectedIndex].value.toString();
+    var resultSelect = document.querySelector("#copy-sur");
+    
+    if (copyDocSelect.selectedIndex > 0) {
+      resultSelect.removeAttribute("disabled")
+      var surFilter = docsurInfodata.filter(a => a[0].toString() === copyDocValue.toString()).map(b => b[1]);
+      
+      var surUnique = Array.from(new Set(surFilter));
+      resultSelect.options.length = 1;
+      resultSelect.options[0].selected = true;
+      surUnique.forEach((a) => {
+        var option = document.createElement('option');
+        option.textContent = a;
+        resultSelect.append(option);
+      })
+    } else {
+      resultSelect.setAttribute("disabled","");
+      resultSelect.options.length = 1;
+      resultSelect.options[0].selected = true;
+    }
+  }
+
+  function copySurResult(e) {
+    var copyDocSelect = document.querySelector("#copy-doctor");
+    var copyDocValue = copyDocSelect.options[copyDocSelect.selectedIndex].value.toString();
+    var resultSelect = document.querySelector("#copy-sur");
+    var resultValue = resultSelect.options[resultSelect.selectedIndex].value.toString();
+    var obj = {};
+    productName.forEach(a => obj[a[0]] = [a[2],a[6]])
+    var surFilter = docsurInfodata.filter(a => a[0].toString() === copyDocValue && a[1].toString() === resultValue).map((b) => [b[7],b[1],obj[b[4]][0],b[4],obj[b[4]][1],b[5]]);
+
+    var allCopyResultBox = document.getElementById('surmodiResults');
+    var allCopyTemplatBox = document.getElementById('surmodirowTemplate');
+    var allCopyTemplat = allCopyTemplatBox.content;
+
+    surFilter.forEach((a) => {
+      var allCopytr = allCopyTemplat.cloneNode(true);
+      var sur = allCopytr.querySelector(".surmodi-surusrname");
+      var stan = allCopytr.querySelector(".surmodi-standard");
+      var pro = allCopytr.querySelector(".surmodi-product-name");
+      var useStan = allCopytr.querySelector(".surmodi-use-stan");
+      var use = allCopytr.querySelector(".surmodi-product-use");
+
+      sur.textContent = a[1];
+      stan.textContent = a[2];
+      pro.textContent = a[3];
+      useStan.textContent = a[4];
+      use.value = a[5];
+
+      allCopyResultBox.append(allCopytr);
+    })
+  }
+
+  function displaySurModiDeleteConfirm(e) {
+    if (e.target.dataset.buttonState==='삭제') {
+      e.target.previousElementSibling.classList.remove('d-none')
+      e.target.textContent = '취소';
+      e.target.dataset.buttonState = '삭제취소';
+    } else {
+      e.target.previousElementSibling.classList.add('d-none')
+      e.target.textContent = e.target.previousElementSibling.textContent;
+      e.target.dataset.buttonState='삭제';
+    }
+  }
+
+  function surmodiDelete(e) {
+    var closeBox = e.target.closest('.surmodiresult-box');
+    var deleteRegiNum = closeBox.querySelector('.surmodi-code').textContent;
+
+    loadingStart();
+    if (deleteRegiNum) {
+      google.script.run.withSuccessHandler(function() {
+        e.target.closest('.surmodiresult-box').remove();
+        var ids = docsurInfodata.map(a => a[7]);
+        var index = ids.indexOf(deleteRegiNum);
+        docsurInfodata.splice(index,1)
+        loadingEnd();
+      }).surmodiDelete(deleteRegiNum);
+    } else {
+      e.target.closest('.surmodiresult-box').remove();
+      loadingEnd();
+    }
+  }
+
+
+  function surmodiAddProduct(e) {
+    var closeBox = e.target.closest('.surmodiresult-box');
+    var inputBox = e.target.closest("#searchnn");
+
+    var surmodiAddResultBox = document.getElementById('surmodiResults');
+    var surmodiAddTemplatBox = document.getElementById('surmodirowTemplate-add');
+    var surmodiAddTemplat = surmodiAddTemplatBox.content;
+    var surmodiAddtr = surmodiAddTemplat.cloneNode(true);
+    var surmodiAddselect = surmodiAddtr.querySelector('#surmodi-producnames');
+    var surmodisurname = surmodiAddtr.querySelector(".surmodi-surusrname")
+
+    productName.filter((a) => a[0] != '').forEach((e,i) => {
+      var option = document.createElement('option');
+      option.innerText = e[0];
+      surmodiAddselect.append(option)          
+    })
+
+    if (closeBox) {
+      surmodisurname.textContent = closeBox.querySelector(".surmodi-surusrname").textContent;
+      surmodiAddResultBox.append(surmodiAddtr);
+    } else if (inputBox) {
+      var inputValue = inputBox.querySelector("#surmodi-newsur").value;
+      if (inputValue) {
+        surmodisurname.textContent = inputValue
+        surmodiAddResultBox.append(surmodiAddtr);
+      }
+    }
+  }
+
+  function surmodiSearchProduct(e) {
+    var modiBomQuery = document.querySelectorAll('.surmodiresult-box');
+    var modiArray = [];
+
+    modiBomQuery.forEach((a) => {
+      var trSelect = a.querySelector('#surmodi-producnames');
+      var trPro = trSelect ? trSelect.options[trSelect.selectedIndex].value.toString() : a.querySelector(".surmodi-product-name").textContent;
+      modiArray.push(trPro)
+    })
+          
+    var closePorduct = e.target.closest(".surmodiresult-box");
+    var selectStandard = closePorduct.querySelector('.surmodi-standard');
+    var selectUseStan = closePorduct.querySelector('.surmodi-use-stan');
+    var searchInput = closePorduct.querySelector('#surmodi-productsearch').value;
+    var searchInputWord = searchInput.split(/\s+/);
+    var productNameMapping = productName.map((e) => [e[0]]);
+    var productResultArray = searchInput ? productNameMapping.filter(r => searchInputWord.every(word => r.some(col => col.toString().toLowerCase().includes(word.toString().toLowerCase())))) : []; 
+
+    var closePorductSelect = closePorduct.querySelector("#surmodi-producnames");
+    closePorductSelect.options.length = 0;
+    
+    var baseOption = document.createElement('option');
+    baseOption.setAttribute("value","");
+    baseOption.innerText = "제품을 선택해주세요.";
+    closePorductSelect.append(baseOption);
+    selectStandard.textContent = '';
+    selectUseStan.textContent = '';
+
+    if (searchInput) {
+      productResultArray.forEach((e) => {
+        // if(!modiArray.includes(e[0])) {
+          var option = document.createElement('option');
+          option.innerText = e[0];
+          closePorductSelect.append(option)
+        // }
+      })
+    } else {
+      if(!modiArray.includes(e[0])) {
+        productName.filter((a) => a[0] != '').forEach((e,i) => {
+          var option = document.createElement('option');
+          option.innerText = e[0];
+          closePorductSelect.append(option);
+        })
+      }
+    }
+  }
+
+  function surmodiSelectResult(e) {
+    var closePorduct = e.target.closest(".surmodiresult-box");
+    var selectQuery = closePorduct.querySelector('#surmodi-producnames');
+    var selectValue = selectQuery.options[selectQuery.selectedIndex].value.toString().toLowerCase();
+
+    var obj = {};
+    productName.forEach(a => obj[a[0].toString().toLowerCase()] = [a[2],a[6]])
+
+    var selectStandard = closePorduct.querySelector('.surmodi-standard');
+    var selectUseStan = closePorduct.querySelector('.surmodi-use-stan');
+
+    if(obj[selectValue]) {
+      selectStandard.textContent = obj[selectValue][0];
+      selectUseStan.textContent = obj[selectValue][1];
+    } else {
+      selectStandard.textContent = '';
+      selectUseStan.textContent = '';
+    }
+  }
+
+  function surmodiExcution(e) {
+    if (validation()) {
+      var modiResultBox = document.getElementById('surmodiResults');
+      var modiBomQuery = document.querySelectorAll('.surmodiresult-box');
+      var modiArray = [];
+      var docmodiSelect = document.querySelector("#surmodidocname");
+
+      var docname
+      if(docmodiSelect.selectedIndex > 0) {
+        docname = docmodiSelect.options[docmodiSelect.selectedIndex].value;
+      } else {
+        docname = document.querySelector("#surmodi-newdoc").value;
+      }
+
+      modiBomQuery.forEach((a) => {
+        var trSurname = a.querySelector(".surmodi-surusrname").textContent;
+        var trSelect = a.querySelector('#surmodi-producnames');
+        var trCode = a.querySelector(".surmodi-code").textContent;
+        var trStan = a.querySelector(".surmodi-standard").textContent;
+        var trPro = trSelect ? trSelect.options[trSelect.selectedIndex].value.toString() : a.querySelector(".surmodi-product-name").textContent;
+        var trUseStan = a.querySelector(".surmodi-use-stan").textContent;
+        var trUse = a.querySelector(".surmodi-product-use").value;
+        
+        modiArray.push([docname, trSurname, trStan,trPro, trUseStan, trUse, trCode]);
+      })
+
+      if (modiArray.length > 0) {
+        loadingStart();          
+        google.script.run.withSuccessHandler(function() {
+          document.getElementById('save-success-massage').classList.remove('invisible');
+
+          e.target.classList.add('d-none')
+          e.target.nextElementSibling.textContent = e.target.textContent;
+          e.target.dataset.buttonState='삭제';
+
+          var docsurIndex = docsurInfodata.map(e => e[7]);
+
+          modiArray.forEach((b) => {
+            var ii = docsurIndex.indexOf(b[4]);
+            if (ii > -1) {
+              docsurInfodata[ii].splice(2)
+              e.forEach((a) => docsurInfodata.push(a))
+            }
+          })
+
+          loadingEnd();
+          setTimeout(function() {
+          document.getElementById('save-success-massage').classList.add('invisible')
+          },2000)
+        }).surmodiInput(modiArray)
+        loadSurModi();
+      } else {
+        document.getElementById('save-success-massage').classList.remove('invisible')
+        document.getElementById('save-success-massage').textContent = '수정 혹은 추가할 내용이 없습니다.'
+        setTimeout(function() {
+          document.getElementById('save-success-massage').classList.add('invisible')
+          document.getElementById('save-success-massage').textContent = '성공적으로 수정되었습니다!'
+        },3000)
+      }
+    }
+  }
+
+  function backSurModi(e) {
+    loadSurModi();
+  }
+
+</script>
